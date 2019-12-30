@@ -1,0 +1,28 @@
+<nav>
+  <div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">Change Detection</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" style="border:darkgray" data-target="#navbarSupportedContent" >
+        <a class="nav-link" routerLink="home" style="color:white" href="#">Home</a>
+        <a class="nav-link" routerLink="config" style="color:white" href="#">Configuration</a>
+        <a class="nav-link" routerLink="view" style="color:white" href="#">View</a>
+      </button>    
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active" style="margin:5%">
+            <a class="nav-link" routerLink="home" href="#">Home</a>
+          </li>
+          <li class="nav-item" style="margin:5%">
+            <a class="nav-link" routerLink="config" href="#">Configuration</a>
+          </li>
+          <li class="nav-item" style="margin:5%">
+            <a class="nav-link" routerLink="view" href="#">View</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</nav>
+<main>
+  <router-outlet></router-outlet>
+</main>

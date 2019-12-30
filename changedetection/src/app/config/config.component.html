@@ -1,0 +1,35 @@
+<div class="display-4">
+    Configuration
+</div>
+<p class="lead">
+    Here you can configure the website and element to watch.
+</p>
+<div class="container">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <p class="lead">
+                    URL:
+                </p>
+            </div>
+            <div class="col">
+                <input type="url" id="url" placeholder="e.g. www.orf.at" [(ngModel)]="url">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p class="lead">
+                    Query string:
+                </p>
+            </div>
+            <div class="col">
+                <input type="text" placeholder="e.g. .container > h2" [(ngModel)]="element">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col align-self-center">
+                <button type="button" (click)="configure()" class="btn btn-secondary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
