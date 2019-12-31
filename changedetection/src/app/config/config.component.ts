@@ -27,7 +27,6 @@ export class ConfigComponent implements OnInit {
     public configure(): void {
       this.api.contentChanged.subscribe( value => {
         if (value === true) {
-          alert('The content of the watched website changed, go to the view.');
         }
       });
 

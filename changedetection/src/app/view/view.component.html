@@ -1,2 +1,34 @@
-<img [src]="newImagePath" class="rounded float-left" alt="...">
-<img [src]="oldImagePath" class="rounded float-right" alt="...">
+<div>
+    <div class="card">
+        <div class="card-header">
+            Differences
+          </div>
+        <div class="card-body">
+            <p class="card-text">{{difference}}</p>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="card">
+            <div class="card-header">
+                New website screenshot
+              </div>
+            <img [src]="newImagePath" alt="newScreenshot" class="img-responsive">
+            <div class="card-body">
+                <p class="card-text">{{newContent}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="card">
+            <div class="card-header">
+                Old website screenshot
+              </div>
+              <img [src]="oldImagePath" alt="oldScreenshot" class="img-responsive">
+            <div class="card-body">
+                <p class="card-text">{{oldContent}}</p>
+            </div>
+        </div>
+    </div>
+</div>

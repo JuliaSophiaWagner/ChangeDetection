@@ -6,32 +6,32 @@ import { EventEmitter } from "events";
 export class PuppeteerServer {
     private checkInterval!: NodeJS.Timeout;
     private puppeteer : any;
+   
     constructor(url: string, targetQery: string) {
         this.puppeteer = require('puppeteer');
-        this.currentContent = "";
-        this.lastChangeTimestamp = 0;
+        this.currentContent = '';
+        this.newContent = '';
         this.url = url;
         this.targetQuery = targetQery;
-        this.onContentChanged = new EventEmitter();
         this.firstTime = false;
         this.changed = false;
+        this.message = '';
+        this.connected = false;
+        this.oldContent = '';
     }
 
+    public message:string;
     public changed: boolean;
-    public onContentChanged: EventEmitter;
-
-    public currentContent: string;
-
-    public lastChangeTimestamp: number;
-
     public url: string;
-
+    public connected: boolean;
     public targetQuery: string;
     public firstTime: boolean;
+    public currentContent: string;
+    public newContent: string;
+    public oldContent: string;
 
     public start(): void {   
         console.log('Start puppeteer');
-        this.onContentChanged.emit('data');
         this.stop();
         this.checkInterval = setInterval(() => 
         {
@@ -42,21 +42,28 @@ export class PuppeteerServer {
     public executeTimer(): void {
         (async () => {
            
-        console.log(this.url);
-        console.log("check");
-
-         const browser = await puppeteer.launch({headless: true});
+            const browser = await puppeteer.launch({headless: true});
             const page = await browser.newPage();
             console.log(`Trying to connect to ${this.url}`);
+
             await page.goto(this.url).catch(async () => {
-                console.warn("error while opening the url.");
+                console.warn(`error while opening the url ${this.url}`);
+                this.message = `Couldnt open the url ${this.url}, maybe you should add "https" to the beginning.`;
                 await browser.close();
+                this.stop();
                 return;
             });
+
             console.log('connected');
-            let newContent = await page.$eval(this.targetQuery, e => e.innerHTML);
-            console.log(this.targetQuery)
-          
+            this.newContent = await page.$eval(this.targetQuery, e => e.innerHTML).catch(async () => {
+                console.warn(`error while getting the target query ${this.targetQuery}.`);
+                this.message = `Couldnt open the target query ${this.targetQuery}.`;
+                await browser.close();
+                this.stop();
+                return;
+            }) as string;          
+
+            this.message = '';
 
             if (this.firstTime === false)
             {
@@ -64,20 +71,17 @@ export class PuppeteerServer {
                 await page.screenshot({path: '../changedetection/dist/changedetection/oldContent.png'});
             }
 
-            if (newContent != this.currentContent){
+            if (this.newContent != this.currentContent){
                 
                 var fs = require('fs');
                 this.changed = true;
                 fs.rename('../changedetection/dist/changedetection/newContent.png', '../changedetection/dist/changedetection/oldContent.png', function (err:any) {
                   if (err) throw err;
-                  console.log('File Renamed.');
                 });
     
                 await page.screenshot({path: '../changedetection/dist/changedetection/newContent.png'});
-                console.log("content changed");
-                this.lastChangeTimestamp = Date.now();
-                this.currentContent = newContent;
-                this.onContentChanged.emit('data');
+                this.oldContent = this.currentContent;
+                this.currentContent = this.newContent as string;
             }
             else
             {
@@ -88,23 +92,12 @@ export class PuppeteerServer {
             this.firstTime = true;
             await browser.close(); 
         })();
-
-        // (async () => {
-        //     console.log("start");
-        //     const browser = await puppeteer.launch();
-        //     const page = await browser.newPage();
-        //     await page.goto(this.url);
-        //     console.log(page);
-        //     await browser.close();
-        //     this.stop();
-                
-        // })();
     }
-
     
 
     public stop(): void {
         this.firstTime = false;
+        this.connected = false;
         clearInterval(this.checkInterval);
     }
 }
@@ -192,14 +185,16 @@ app.use(express.static(path.join(__dirname, "../../changedetection/dist/changede
 app.use(express.json());
 
 app.get('/poll', (req, res) => {
-    // let curToken = req.header('Authorization');
-        let responseBody = {
-            changed: puppeteerServer.changed
-            // timestamp: Date.now()
-        }
-        // res.status(200).json(['polling message']);
-        res.send(puppeteerServer.changed);
-        console.log('polling');
+    
+    const responseBody = {
+        changed: puppeteerServer.changed,
+        alertMessage: puppeteerServer.message,
+        newContent: puppeteerServer.newContent,
+        oldContent: puppeteerServer.oldContent
+    }
+
+    let responseBodyTemp = JSON.stringify(responseBody);
+    res.send(responseBodyTemp);
 });
 
 app.get("*", function (req, res) {
@@ -208,8 +203,6 @@ app.get("*", function (req, res) {
 
 // start the server on port 3000
 app.listen(3000, () => console.log('started at http://localhost:3000/'));
-// puppeteerServer.onContentChanged.on('data', (test)=>sendData(test));
-
 
 app.post("/addConfiguration", function(req, res) {
 console.log("addconfiguration");
@@ -220,43 +213,3 @@ puppeteerServer.url = url;
 puppeteerServer.targetQuery = targetQuery;
 puppeteerServer.start();
 });
-
-
-// app.get("/polling", function(req, res) {
-//     // if (req.query.lastTimestamp == undefined){
-//     //     res.status(400).send("No timestamp specified");
-//     //     return;
-//     // }
-//     console.log('polling');
-//     let lastTimestamp = Number(req.query.lastTimestamp);
-//     let responseBody;
-
-//     // TODO !!!
-//     responseBody = {
-//         success: true,
-//         timestamp: Date.now()
-//     }
-
-//     // res.send(JSON.stringify(responseBody));
-// });
-
-// app.get("/poll", function(req, res) {
-//     if (req.query.lastTimestamp == undefined){
-//         res.status(400).send("No timestamp specified");
-//         return;
-//     }
-
-//     let lastTimestamp = Number(req.query.lastTimestamp);
-//     let responseBody;
-
-//     if (puppeteerServer.lastChangeTimestamp > lastTimestamp) {
-//         responseBody = {
-//             success: true,
-//             timestamp: Date.now()
-//         }
-//     }else{
-//         
-//     }
-
-//     res.send(JSON.stringify(responseBody));
-// });
