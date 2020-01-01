@@ -1,1 +1,13 @@
 @import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+
+body::after {
+    content: "";
+    background: url('assets/img/background.jpg');
+    opacity: 0.5;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    position: fixed;
+    z-index: -1;   
+  }

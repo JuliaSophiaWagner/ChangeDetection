@@ -1,11 +1,11 @@
-import puppeteer, { TargetAwaiter } from "puppeteer";
+import puppeteer from "puppeteer";
 import express from "express";
 import * as path from "path";
-import { EventEmitter } from "events";
 
 export class PuppeteerServer {
     private checkInterval!: NodeJS.Timeout;
     private puppeteer : any;
+    private currentContent: string;
    
     constructor(url: string, targetQery: string) {
         this.puppeteer = require('puppeteer');
@@ -26,25 +26,43 @@ export class PuppeteerServer {
     public connected: boolean;
     public targetQuery: string;
     public firstTime: boolean;
-    public currentContent: string;
     public newContent: string;
     public oldContent: string;
 
     public start(): void {   
-        console.log('Start puppeteer');
+        this.initialize();
         this.stop();
         this.checkInterval = setInterval(() => 
         {
             this.executeTimer();
         }, 10000);
     }
+    
+    private initialize() {
+        this.currentContent = '';
+        this.newContent = '';
+        this.firstTime = false;
+        this.changed = false;
+        this.message = '';
+        this.connected = false;
+        this.oldContent = '';
+    }
 
     public executeTimer(): void {
-        (async () => {
-           
+        (async () => {     
+            this.message = ''; 
+            this.changed = false;     
             const browser = await puppeteer.launch({headless: true});
             const page = await browser.newPage();
             console.log(`Trying to connect to ${this.url}`);
+
+            if (this.url === null || this.url === undefined || this.url === '') {
+                console.warn(`error while opening the url ${this.url}`);
+                this.message = `Wrong input! Couldnt connect to the url "${this.url}".`;
+                await browser.close();
+                this.stop();
+                return;
+            }
 
             await page.goto(this.url).catch(async () => {
                 console.warn(`error while opening the url ${this.url}`);
@@ -54,7 +72,16 @@ export class PuppeteerServer {
                 return;
             });
 
-            console.log('connected');
+            console.log(`connected with the url ${this.url}`);
+
+            if (this.targetQuery === null || this.targetQuery === undefined || this.targetQuery === '') {
+                console.warn(`error while getting the target query ${this.targetQuery}.`);
+                this.message = `Wrong input! Couldnt open the target query "${this.targetQuery}".`;
+                await browser.close();
+                this.stop();
+                return;
+            }
+
             this.newContent = await page.$eval(this.targetQuery, e => e.innerHTML).catch(async () => {
                 console.warn(`error while getting the target query ${this.targetQuery}.`);
                 this.message = `Couldnt open the target query ${this.targetQuery}.`;
@@ -63,30 +90,32 @@ export class PuppeteerServer {
                 return;
             }) as string;          
 
-            this.message = '';
-
-            if (this.firstTime === false)
-            {
-                await page.screenshot({path: '../changedetection/dist/changedetection/newContent.png'});
-                await page.screenshot({path: '../changedetection/dist/changedetection/oldContent.png'});
-            }
+            // to make a screenshot only of the target query
+            const handles = await page.$(this.targetQuery);
+            const buffer = await handles!.screenshot();
 
             if (this.newContent != this.currentContent){
                 
                 var fs = require('fs');
-                this.changed = true;
-                fs.rename('../changedetection/dist/changedetection/newContent.png', '../changedetection/dist/changedetection/oldContent.png', function (err:any) {
-                  if (err) throw err;
-                });
-    
+
+                if (this.firstTime) {
+                    // rename file after the first time, because the old content is now the new content picture from the last time.
+                    fs.rename('../changedetection/dist/changedetection/newContent.png', '../changedetection/dist/changedetection/oldContent.png', 
+                        function (err:any) {
+                            if (err) console.warn('Couldnt find the file of the image.');
+                        });
+                }
+
                 await page.screenshot({path: '../changedetection/dist/changedetection/newContent.png'});
                 this.oldContent = this.currentContent;
-                this.currentContent = this.newContent as string;
+                this.currentContent = this.newContent;
+                this.changed = true;
             }
             else
             {
                 this.changed = false;
                 await page.screenshot({path: '../changedetection/dist/changedetection/oldContent.png'});
+                this.oldContent = this.currentContent;
             }
 
             this.firstTime = true;
@@ -102,114 +131,42 @@ export class PuppeteerServer {
     }
 }
 
-// export class Server {
-//     public app: express.Express;
-//     public serverName = "webserver";
-//     public tokens: string[] = [];
-//     public timer: any;
-//     public currentContent: string = "";
-//     public lastChangeTimestamp: any;
-//     public url: string = "www.fhwn.ac.at";
-    
-//     public targetQuery: string = ".content-wrapper .container h2";
-    
-    
-//     constructor() {
-//         // initialize the express js app
-//         this.app = express();
+export class Server {
+    private app: express.Express;
+    private currentContent: string;
+    private puppeteerServer: PuppeteerServer;
 
-//         // offer the angular page
-//         this.app.use(express.static(path.join(__dirname, "../../changedetection/dist/changedetection")));
-        
-//         this.app.get("*", function (req, res) {
-//             res.sendFile(path.join(__dirname, "../../changedetection/dist/changedetection", "index.html"));
-//         });
-        
-//         // start the server on port 3000
-//         this.app.listen(3000, () => console.log('started at http://localhost:3000/'));
+    constructor() {
+        this.puppeteerServer = new PuppeteerServer('', '');
+        this.currentContent = '';
+        this.app = express();
+        this.app.use(express.static(path.join(__dirname, '../../changedetection/dist/changedetection')));
+        this.app.use(express.json());
 
-//         this.app.post("/setconfig", function(req, res) {
-//         let url = req.body.url;
-//         let target = req.body.target;
-//         console.log(url);
-//         console.log(target);
-    
-//         url = url;
-//         // const targetQuery = target;
-//         });
-    
-//         this.app.get("/latest", function(req, res) {
-//             console.log('get');
-//             let responseBody = {
-//                 latestPollTimestamp: Date.now(),
-//                 // lastChangeTimestamp: lastChangeTimestamp,
-//                 // latestContent: observer.currentContent
-//             }
-        
-//             res.send(JSON.stringify(responseBody));
-//         });    
-// }   
-    
-// public start(): void {
-//         this.timer = setInterval(() => {
-//             this.execute(this.url, this.targetQuery);
-//         }, 5000);
-//     }
+        this.app.get('/poll', (req, res) => {
+            const responseBody = {
+                changed: this.puppeteerServer.changed,
+                alertMessage: this.puppeteerServer.message,
+                newContent: this.puppeteerServer.newContent,
+                oldContent: this.puppeteerServer.oldContent
+            }
 
-//     public stop(): void {
-//         clearInterval(this.timer);
-//     }
+            let responseBodyTemp = JSON.stringify(responseBody);
+            res.send(responseBodyTemp);
+        });
 
-//     public execute(url: string, target: string): void {
-//         console.log("check");
-//     }
-// }
+        this.app.get("*", (req, res) => {
+            res.sendFile(path.join(__dirname, "../../changedetection/dist/changedetection", "index.html"));
+        });
 
-// create the server
-// new Server();
+        this.app.post("/addConfiguration", (req, res) => {
+            this.puppeteerServer.url = req.body.url;
+            this.puppeteerServer.targetQuery = req.body.target;
+            this.puppeteerServer.start();
+        });
 
-let serverName = "webserver";
-let tokens: string[] = [];
-let timer: any;
-let currentContent: string = "";
-let lastChangeTimestamp: any;
-let url: string = "";
-let targetQuery: string = ".content-wrapper .container h2";
-let puppeteerServer = new PuppeteerServer(url, targetQuery);
-
-// initialize the express js app
-const app = express();
-
-// offer the angular page
-app.use(express.static(path.join(__dirname, "../../changedetection/dist/changedetection")));
-app.use(express.json());
-
-app.get('/poll', (req, res) => {
-    
-    const responseBody = {
-        changed: puppeteerServer.changed,
-        alertMessage: puppeteerServer.message,
-        newContent: puppeteerServer.newContent,
-        oldContent: puppeteerServer.oldContent
+        this.app.listen(3000, () => console.log('started at http://localhost:3000/'));
     }
+}
 
-    let responseBodyTemp = JSON.stringify(responseBody);
-    res.send(responseBodyTemp);
-});
-
-app.get("*", function (req, res) {
-    res.sendFile(path.join(__dirname, "../../changedetection/dist/changedetection", "index.html"));
-});
-
-// start the server on port 3000
-app.listen(3000, () => console.log('started at http://localhost:3000/'));
-
-app.post("/addConfiguration", function(req, res) {
-console.log("addconfiguration");
-console.log(req.body.url);
-url = req.body.url;
-targetQuery = req.body.target;
-puppeteerServer.url = url;
-puppeteerServer.targetQuery = targetQuery;
-puppeteerServer.start();
-});
+let server:Server = new Server();

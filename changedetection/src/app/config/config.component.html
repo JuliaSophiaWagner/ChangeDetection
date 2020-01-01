@@ -1,9 +1,19 @@
-<div class="display-4">
-    Configuration
+<div class="container" style="margin: 5%;">
+    <div class="row">
+        <div class="col justify-content-center">
+            <div class="row justify-content-center">
+                <div class="display-4">
+                    Configuration
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <p class="lead">
+                    Here you can configure the website and the element (target query) to watch.
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
-<p class="lead">
-    Here you can configure the website and element to watch.
-</p>
 <div class="container">
     <div class="container">
         <div class="row">
@@ -13,7 +23,7 @@
                 </p>
             </div>
             <div class="col">
-                <input type="url" id="url" placeholder="e.g. www.orf.at" [(ngModel)]="url">
+                <input type="url" id="url" placeholder="e.g. https://www.orf.at/" [(ngModel)]="url">
             </div>
         </div>
         <div class="row">
@@ -23,7 +33,7 @@
                 </p>
             </div>
             <div class="col">
-                <input type="text" placeholder="e.g. .container > h2" [(ngModel)]="element">
+                <input type="text" placeholder="e.g. footer" [(ngModel)]="element">
             </div>
         </div>
         <div class="row">

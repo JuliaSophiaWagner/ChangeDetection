@@ -1,34 +1,28 @@
-<div>
-    <div class="card">
-        <div class="card-header">
-            Differences
-          </div>
-        <div class="card-body">
-            <p class="card-text">{{difference}}</p>
-        </div>
-    </div>
-</div>
 <div class="row">
-    <div class="col-sm-6">
-        <div class="card">
-            <div class="card-header">
-                New website screenshot
-              </div>
+    <div class="col-4">
+        <div class="row">
+            <p class="lead" style="padding: 5%; color: darkblue;">
+                Current website screenshot
+            </p>
             <img [src]="newImagePath" alt="newScreenshot" class="img-responsive">
-            <div class="card-body">
-                <p class="card-text">{{newContent}}</p>
-            </div>
+        </div>
+        <div class="row">
+            <p class="lead" style="padding: 5%; color: darkblue;">Current inner html content of the target query:</p>
+            <p class="text-justify" style="width: 70%;">{{newContent}}</p>
         </div>
     </div>
-    <div class="col-sm-6">
-        <div class="card">
-            <div class="card-header">
-                Old website screenshot
-              </div>
-              <img [src]="oldImagePath" alt="oldScreenshot" class="img-responsive">
-            <div class="card-body">
-                <p class="card-text">{{oldContent}}</p>
-            </div>
-        </div>
+    <div class="col-4">
+    </div>
+    <div class="col-4">
+    <div class="row">
+        <p class="lead"  style="padding: 5%; color: darkblue;">
+            Old website screenshot
+        </p>
+        <img [src]="oldImagePath" alt="oldScreenshot" class="img-responsive">
+    </div>
+    <div class="row">
+        <p class="lead" style="padding: 5%; color: darkblue;">Old inner html content of the target query:</p>
+        <p class="text-justify" style="width: 70%;">{{oldContent}}</p>
+    </div>
     </div>
 </div>

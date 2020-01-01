@@ -9,10 +9,6 @@ import { ApiClientService } from './service/api-client.service';
 export class AppComponent {
   title = 'changedetection';
 
-  get hasChanged() {
-    return this.apiClient.changed;
-  }
-
   constructor(private apiClient: ApiClientService) {
   }
 }
